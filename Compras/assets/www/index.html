@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Compras</title>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<link rel="stylesheet" href="jquery.mobile-1.2.0.min.css" />
+<script src="jquery-1.8.2.min.js"></script>
+<script src="jquery.mobile-1.2.0.min.js"></script>
+<script type="text/javascript" charset="utf-8" src="cordova-1.8.1.js"></script>
+<script type="text/javascript" charset="utf-8" src="barcodescanner.js"></script>
+</head>
+<body>
+<div data-role="page" id="primeira">
+	<div data-role="header">
+		<h1>Compras</h1>
+	</div>
+	<div data-role="content">
+		<ul data-role="listview" data-inset="true">
+			<li data-role="list-divider">MENU</li>
+			<li><a href="#segunda">Informação do Produto</a></li>
+		</ul>
+	</div>
+</div>
+<div data-role="page" id="segunda">
+	<div data-role="header">
+		<h1>Produto</h1>
+	</div>
+	<div data-role="content">
+		<p>
+			<a href="#primeira" data-rel="back">Voltar</a>
+			<input type="button" value="Scan product..." onclick="scanCode()">
+		</p>
+		<p>
+			<div id="response"></div>
+		</p>
+	</div>
+	<div id="connection"></div>
+</div>
+<script type="text/javascript">
+var scanCode = function() {
+	checkNetwork();
+	var Compras = {
+			getProduct : function(barcode) {
+				$('#response').html('');
+				var rd = new Date().getTime();
+				var vo = '{"params":["'+barcode+'"],"method":"getProduto","id":"'+rd+'"}';
+			    $.ajax({
+				    url: 'http://ws.wmnet.com.br/wmnet/services/CompraService.json',
+				    type: 'post',
+				    data: vo,
+				    success: function(data) {
+						//it works, do something with the data
+						//alert(data.result.codigoBarra);
+						if(!data.error){
+							$('#response').html('<div><p>ID: '
+								+data.result.produto.id+'</p><p>Código de Barras: '
+								+data.result.produto.codigoBarra+'</p><p>Nome: '
+								+data.result.produto.nome+'</p><p>Nome completo: '
+								+data.result.produto.nomeCompleto+'</p><p>Descrição NCM: '
+								+data.result.produto.descricaoNcm+'</p></div>');
+						}else{
+							alert('Ops... Esse produto eu não conheço!');
+							$('#response').html('<p>No result.</p>');
+						}
+						
+					},
+					error: function(data) {
+						//something went wrong, handle the error and display a message
+						alert("Não será possível buscar o produto.");
+					}
+				  }).done(function() {  })
+				    .fail(function() { alert("error: Falha!"); })
+				    .always(function() {  });
+			    
+			}
+		
+	}
+
+    window.plugins.barcodeScanner.scan(
+        function(result) {
+			var t = new Date().getTime();
+			var barcode = result.text;
+			var code = barcode.toString();
+			Compras.getProduct(barcode);
+		
+	    }, function(error) {
+	        alert("Scan failed: " + error);
+	    }
+	);
+}
+
+function checkNetwork() {
+    var networkState = navigator.network.connection.type;
+
+    var states = {};
+    states[Connection.UNKNOWN]  = 'Unknown connection';
+    states[Connection.ETHERNET] = 'Ethernet connection';
+    states[Connection.WIFI]     = 'WiFi connection';
+    states[Connection.CELL_2G]  = 'Cell 2G connection';
+    states[Connection.CELL_3G]  = 'Cell 3G connection';
+    states[Connection.CELL_4G]  = 'Cell 4G connection';
+    states[Connection.NONE]     = 'No network connection';
+
+    $('#connection').html(states[networkState]);
+    
+    if(states[Connection.NONE]){
+    	return false;
+    }
+    return true;
+}
+</script>
+</body>
+</html>
+
